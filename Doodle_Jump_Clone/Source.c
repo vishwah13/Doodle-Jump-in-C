@@ -4,6 +4,7 @@
 #define G 400
 #define PLAYER_JUMP_SPD 350.0f
 #define PLAYER_HOR_SPD 200.0f
+#define PLATFORMCOUNT 99
 
 
 typedef struct Player {
@@ -18,7 +19,9 @@ typedef struct Platform {
 	Color color;
 } Platform;
 
-Platform platforms[99];
+
+Platform platforms[PLATFORMCOUNT];
+int y = 800;
 int platformsLength;
 
 void UpdatePlayer(Player* player, Platform* envItems, int envItemsLength, float delta);
@@ -82,6 +85,13 @@ int main()
 		Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
 		DrawRectangleRec(playerRect, RED);
 
+		if (player.position.y < y)
+		{
+			y += 500;
+			RandomPlatformGenerator();
+		}
+			
+
 
 		EndDrawing();
 	}
@@ -114,6 +124,7 @@ void UpdatePlayer(Player* player, Platform* envItems, int envItemsLength, float 
 			player->speed = 0.0f;
 			p->y = ei->rect.y;
 		}
+		
 	}
 
 	if (!hitObstacle)
@@ -169,7 +180,7 @@ void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* en
 
 void RandomPlatformGenerator()
 {
-	int y = 800;
+	
 
 	for (int i = 0;i < 99;i++)
 	{
