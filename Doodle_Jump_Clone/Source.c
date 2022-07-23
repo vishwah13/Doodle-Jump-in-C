@@ -25,13 +25,19 @@ Platform platforms[PLATFORMCOUNT];
 int y = 800;
 int platformsLength;
 
-int Score = 0;
+int Score;
+bool bGameOver = false;
+bool bPaused = false;
+
+void InitGame(Player* player,Camera2D* camera);
 
 void UpdatePlayer(Player* player, Platform* envItems, int envItemsLength, float delta);
 
 void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* envItems, int envItemsLength, float delta, int width, int height);
 
 void RandomPlatformGenerator();
+void DestroyPlatformAfterCrossedCameraBorder(Platform* platform,int platformsLength,Camera2D* camera);
+void CheckForGameOver(Player* player,Camera2D* camera);
 
 void UpdateScore(Player* player);
 
@@ -46,9 +52,7 @@ int main()
 	InitWindow(ScreenWidth, ScreenHeight, "Doodle Jump Clone");
 
 	Player player = { 0 };
-	player.position = (Vector2){ 300, 400 };
-	player.speed = 0;
-	player.canJump = false;
+	
 
 
 	/*Platform envItems[] = {
@@ -62,36 +66,44 @@ int main()
 	int envItemsLength = sizeof(envItems) / sizeof(envItems[0]);*/
 
 	Camera2D camera = { 0 };
-	camera.target = player.position;
-	camera.offset = (Vector2){ ScreenWidth / 2.0f, ScreenHeight / 2.0f };
-	camera.rotation = 0.0f;
-	camera.zoom = 1.0f;
-	RandomPlatformGenerator();
+
+	InitGame(&player, &camera);
+	
 
 	while (!WindowShouldClose())
 	{
 		float deltaTime = GetFrameTime();
 
-		UpdatePlayer(&player, platforms, platformsLength, deltaTime);
+		if (!bGameOver)
+		{
+			if (IsKeyPressed('P')) bPaused = !bPaused;
+			
+			if (!bPaused)
+			{
+				UpdatePlayer(&player, platforms, platformsLength, deltaTime);
 
-		UpdateCameraEvenOutOnLanding(&camera, &player, platforms, platformsLength, deltaTime, ScreenWidth, ScreenHeight);
+				UpdateCameraEvenOutOnLanding(&camera, &player, platforms, platformsLength, deltaTime, ScreenWidth, ScreenHeight);
 
-		UpdateScore(&player);
+				UpdateScore(&player);
 
-		BeginDrawing();
-		ClearBackground(LIGHTGRAY);
-		
-		DrawText(TextFormat("%08i", Score), 5, 5, 20, RED);
-		BeginMode2D(camera);
+				DestroyPlatformAfterCrossedCameraBorder(platforms, platformsLength, &camera);
+				CheckForGameOver(&player, &camera);
+			}
+		}
+		else if(bGameOver)
+		{
+			if (IsKeyPressed(KEY_ENTER))
+			{
+				InitGame(&player, &camera);
+				bGameOver = false;
+			}
+		}
 
-		for (int i = 0; i < platformsLength; i++) DrawRectangleRec(platforms[i].rect, platforms[i].color);
-
-		 //playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
-		 playerRect.x = player.position.x - 20;
-		 playerRect.y = player.position.y - 40;
-		 playerRect.width = 40;
-		 playerRect.height = 40;
-		DrawRectangleRec(playerRect, RED);
+		//playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
+		playerRect.x = player.position.x - 20;
+		playerRect.y = player.position.y - 40;
+		playerRect.width = 40;
+		playerRect.height = 40;
 
 		if (player.position.y < y)
 		{
@@ -99,11 +111,43 @@ int main()
 			RandomPlatformGenerator();
 		}
 
+		BeginDrawing();
+		//Drawing Score Text
+		DrawText(TextFormat("%08i", Score), 5, 5, 20, RED);
+
+		if (bGameOver)
+			DrawText(TextFormat("Press ENTER to Play again !"), 80, 250, 20, RED);
+		
+		ClearBackground(LIGHTGRAY);
+		
+		BeginMode2D(camera);
+
+		//Drawing Platforms
+		for (int i = 0; i < platformsLength; i++) DrawRectangleRec(platforms[i].rect, platforms[i].color);
+
+		//Drawing Player
+		DrawRectangleRec(playerRect, RED);
 
 		EndDrawing();
 	}
 	CloseWindow();
 	return 0;
+}
+
+void InitGame(Player* player, Camera2D* camera)
+{
+	y = 800;
+	Score = 0;
+
+	player->position = (Vector2){ 300, 400 };
+	player->speed = 0;
+	player->canJump = false;
+
+	camera->target = player->position;
+	camera->offset = (Vector2){ GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
+	camera->rotation = 0.0f;
+	camera->zoom = 1.0f;
+	RandomPlatformGenerator();
 }
 
 void UpdatePlayer(Player* player, Platform* envItems, int envItemsLength, float delta)
@@ -145,6 +189,7 @@ void UpdatePlayer(Player* player, Platform* envItems, int envItemsLength, float 
 	//Invert the Player postion on X Axis While player cross the border on X Axis
 	if (player->position.x > GetScreenWidth()+100 ) player->position.x = 40;
 	if (player->position.x < 0) player->position.x = GetScreenWidth() +80;
+
 }
 
 void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* envItems, int envItemsLength, float delta, int width, int height)
@@ -205,9 +250,29 @@ void RandomPlatformGenerator()
 	platformsLength = sizeof(platforms) / sizeof(platforms[0]);
 }
 
+void DestroyPlatformAfterCrossedCameraBorder(Platform* platform, int platformsLength, Camera2D* camera)
+{
+	for (int i = 0; i < platformsLength; i++)
+	{
+		if (camera->target.y + 200< platform[i].rect.y)
+		{
+			platform[i] = platform[i + 1];
+		}
+			
+	}
+}
+
+void CheckForGameOver(Player* player, Camera2D* camera)
+{
+	if (player->speed > 600.f)
+	{
+		bGameOver = true;
+	}
+}
+
 void UpdateScore(Player* player)
 {
 	if (player->canJump && (player->speed == 0))
-		Score = (player->position.y - 500) * -1;
+		Score = (player->position.y - 600)  * -1;
 	
 }
