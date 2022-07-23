@@ -30,15 +30,11 @@ bool bGameOver = false;
 bool bPaused = false;
 
 void InitGame(Player* player,Camera2D* camera);
-
 void UpdatePlayer(Player* player, Platform* platform, int platformsLength, float delta);
-
 void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* platform, int platformsLength, float delta, int width, int height);
-
 void RandomPlatformGenerator();
 void DestroyPlatformAfterCrossedCameraBorder(Platform* platform,int platformsLength,Camera2D* camera);
 void CheckForGameOver(Player* player,Camera2D* camera);
-
 void UpdateScore(Player* player);
 
 
@@ -92,7 +88,6 @@ int main()
 			GeneratedPlatformYaxisValue += 500;
 			RandomPlatformGenerator();
 		}
-
 		//Drawing Things
 		BeginDrawing();
 		ClearBackground(LIGHTGRAY);
