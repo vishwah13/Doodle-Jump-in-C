@@ -25,11 +25,15 @@ Platform platforms[PLATFORMCOUNT];
 int y = 800;
 int platformsLength;
 
+int Score = 0;
+
 void UpdatePlayer(Player* player, Platform* envItems, int envItemsLength, float delta);
 
 void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* envItems, int envItemsLength, float delta, int width, int height);
 
 void RandomPlatformGenerator();
+
+void UpdateScore(Player* player);
 
 
 
@@ -68,14 +72,16 @@ int main()
 	{
 		float deltaTime = GetFrameTime();
 
-		
-
 		UpdatePlayer(&player, platforms, platformsLength, deltaTime);
 
 		UpdateCameraEvenOutOnLanding(&camera, &player, platforms, platformsLength, deltaTime, ScreenWidth, ScreenHeight);
 
+		UpdateScore(&player);
+
 		BeginDrawing();
 		ClearBackground(LIGHTGRAY);
+		
+		DrawText(TextFormat("%08i", Score), 5, 5, 20, RED);
 		BeginMode2D(camera);
 
 		for (int i = 0; i < platformsLength; i++) DrawRectangleRec(platforms[i].rect, platforms[i].color);
@@ -92,7 +98,6 @@ int main()
 			y += 500;
 			RandomPlatformGenerator();
 		}
-			
 
 
 		EndDrawing();
@@ -186,10 +191,9 @@ void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* en
 void RandomPlatformGenerator()
 {
 	
-
-	for (int i = 0;i < 99;i++)
+	for (int i = 0;i < PLATFORMCOUNT;i++)
 	{
-		Rectangle RandomRec[99];
+		Rectangle RandomRec[PLATFORMCOUNT];
 		Rectangle tempRandomRec = { GetRandomValue(0,400), y -= 50,50,10 };
 		RandomRec[i] = tempRandomRec;
 		
@@ -199,4 +203,11 @@ void RandomPlatformGenerator()
 	}
 
 	platformsLength = sizeof(platforms) / sizeof(platforms[0]);
+}
+
+void UpdateScore(Player* player)
+{
+	if (player->canJump && (player->speed == 0))
+		Score = (player->position.y - 500) * -1;
+	
 }
