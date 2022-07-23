@@ -1,5 +1,5 @@
 #include"raylib.h"
-#include"raymath.h"
+
 
 #define G 400
 #define PLAYER_JUMP_SPD 350.0f
@@ -24,7 +24,6 @@ typedef struct Platform {
 Platform platforms[PLATFORMCOUNT];
 int GeneratedPlatformYaxisValue = 800;
 int PlatformsLength;
-
 int Score;
 bool bGameOver = false;
 bool bPaused = false;
@@ -173,6 +172,7 @@ void UpdatePlayer(Player* player, Platform* platform, int platformsLength, float
 	}
 
 	//Invert the Player postion on X Axis While player cross the border on X Axis
+	//still needs tweeking
 	if (player->position.x > GetScreenWidth()+100 ) player->position.x = 40;
 	if (player->position.x < 0) player->position.x = GetScreenWidth() +80;
 
