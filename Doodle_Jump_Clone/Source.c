@@ -19,6 +19,7 @@ typedef struct Platform {
 	Color color;
 } Platform;
 
+Rectangle playerRect;
 
 Platform platforms[PLATFORMCOUNT];
 int y = 800;
@@ -37,10 +38,8 @@ int main()
 	const int ScreenWidth = 400;
 	const int ScreenHeight = 600;
 
-	//int RandomSeedValue = GetRandomValue(0, 9999);
 
 	InitWindow(ScreenWidth, ScreenHeight, "Doodle Jump Clone");
-	//SetRandomSeed(RandomSeedValue);
 
 	Player player = { 0 };
 	player.position = (Vector2){ 300, 400 };
@@ -80,9 +79,12 @@ int main()
 		BeginMode2D(camera);
 
 		for (int i = 0; i < platformsLength; i++) DrawRectangleRec(platforms[i].rect, platforms[i].color);
-		//for (int i = 0; i < 100; i++) DrawRectangleRec(envItems[2].rect, envItems[2].color);
 
-		Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
+		 //playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
+		 playerRect.x = player.position.x - 20;
+		 playerRect.y = player.position.y - 40;
+		 playerRect.width = 40;
+		 playerRect.height = 40;
 		DrawRectangleRec(playerRect, RED);
 
 		if (player.position.y < y)
@@ -134,6 +136,10 @@ void UpdatePlayer(Player* player, Platform* envItems, int envItemsLength, float 
 		player->canJump = false;
 	}
 	else player->canJump = true;
+
+	//Invert the Player postion on X Axis While player cross the border on X Axis
+	if (player->position.x > GetScreenWidth()+100 ) player->position.x = 40;
+	if (player->position.x < 0) player->position.x = GetScreenWidth() +80;
 }
 
 void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* envItems, int envItemsLength, float delta, int width, int height)
@@ -143,7 +149,6 @@ void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* en
 	static float evenOutTarget;
 
 	camera->offset = (Vector2){ width / 2.0f, height / 2.0f };
-	//camera->target.x = player->position.x;
 
 	if (eveningOut)
 	{
