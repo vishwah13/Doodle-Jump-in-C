@@ -31,9 +31,9 @@ bool bPaused = false;
 
 void InitGame(Player* player,Camera2D* camera);
 
-void UpdatePlayer(Player* player, Platform* envItems, int envItemsLength, float delta);
+void UpdatePlayer(Player* player, Platform* platform, int platformsLength, float delta);
 
-void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* envItems, int envItemsLength, float delta, int width, int height);
+void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* platform, int platformsLength, float delta, int width, int height);
 
 void RandomPlatformGenerator();
 void DestroyPlatformAfterCrossedCameraBorder(Platform* platform,int platformsLength,Camera2D* camera);
@@ -53,18 +53,6 @@ int main()
 
 	Player player = { 0 };
 	
-
-
-	/*Platform envItems[] = {
-		{{ 0, 400, 1000, 20 }, 1, RED },
-		{{ 300, 200, 100, 10 }, 1, GREEN },
-		{{ 250, 300, 100, 10 }, 1, BLUE },
-		{{ 650, 300, 100, 10 }, 1, GRAY }
-		
-	};
-
-	int envItemsLength = sizeof(envItems) / sizeof(envItems[0]);*/
-
 	Camera2D camera = { 0 };
 
 	InitGame(&player, &camera);
@@ -150,7 +138,7 @@ void InitGame(Player* player, Camera2D* camera)
 	RandomPlatformGenerator();
 }
 
-void UpdatePlayer(Player* player, Platform* envItems, int envItemsLength, float delta)
+void UpdatePlayer(Player* player, Platform* platform, int platformsLength, float delta)
 {
 	if (IsKeyDown(KEY_LEFT)) player->position.x -= PLAYER_HOR_SPD * delta;
 	if (IsKeyDown(KEY_RIGHT)) player->position.x += PLAYER_HOR_SPD * delta;
@@ -161,9 +149,9 @@ void UpdatePlayer(Player* player, Platform* envItems, int envItemsLength, float 
 	}
 
 	int hitObstacle = 0;
-	for (int i = 0; i < envItemsLength; i++)
+	for (int i = 0; i < platformsLength; i++)
 	{
-		Platform* ei = envItems + i;
+		Platform* ei = platform + i;
 		Vector2* p = &(player->position);
 		if (ei->blocking &&
 			ei->rect.x <= p->x &&
@@ -192,7 +180,7 @@ void UpdatePlayer(Player* player, Platform* envItems, int envItemsLength, float 
 
 }
 
-void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* envItems, int envItemsLength, float delta, int width, int height)
+void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* platform, int platformsLength, float delta, int width, int height)
 {
 	static float evenOutSpeed = 700;
 	static int eveningOut = false;
