@@ -1,15 +1,15 @@
 #include"raylib.h"
 
-
-#define G 400
-#define PLAYER_JUMP_SPD 350.0f
-#define PLAYER_HOR_SPD 200.0f
+#define GRAVITY 400
+#define PLAYER_JUMP_SPEED 350.0f
+#define PLAYER_HORIZONTAL_SPEED 200.0f
 #define PLATFORMCOUNT 99
 
 
 typedef struct Player {
 	Vector2 position;
 	Rectangle PlayerRect;
+	Texture2D playerTexture;
 	float speed;
 	bool canJump;
 } Player;
@@ -17,11 +17,11 @@ typedef struct Player {
 typedef struct Platform {
 	Rectangle rect;
 	int blocking;
-	Color color;
 } Platform;
 
 
 Platform platforms[PLATFORMCOUNT];
+Texture2D platformTexture;
 int GeneratedPlatformYaxisValue = 800;
 int PlatformsLength;
 int Score;
@@ -46,6 +46,8 @@ int main()
 
 	Player player = { 0 };
 	Camera2D camera = { 0 };
+	player.playerTexture = LoadTexture("resources/character_0001.png");
+	platformTexture = LoadTexture("resources/CloudPlatform.png");
 	InitGame(&player, &camera);
 	
 	while (!WindowShouldClose())
@@ -79,8 +81,11 @@ int main()
 
 		player.PlayerRect.x = player.position.x - 20;
 		player.PlayerRect.y = player.position.y - 40;
-		player.PlayerRect.width = 40;
-		player.PlayerRect.height = 40;
+		/*player.PlayerRect.width = 40;
+		player.PlayerRect.height = 40;*/
+		player.playerTexture.width = 40;
+		player.playerTexture.height = 40;
+
 
 		if (player.position.y < GeneratedPlatformYaxisValue)
 		{
@@ -94,10 +99,12 @@ int main()
 		//Drawing Platforms
 		for (int i = 0; i < PlatformsLength; i++)
 		{
-			DrawRectangleRec(platforms[i].rect, platforms[i].color);
+			//DrawRectangleRec(platforms[i].rect, platforms[i].color);
+			DrawTexture(platformTexture, platforms[i].rect.x, platforms[i].rect.y, WHITE);
 		}
 		//Drawing Player
-		DrawRectangleRec(player.PlayerRect, RED);
+		//DrawRectangleRec(player.PlayerRect, RED);
+		DrawTexture(player.playerTexture, player.PlayerRect.x, player.PlayerRect.y, WHITE);
 		EndMode2D();
 		//Drawing Score Text
 		DrawText(TextFormat("%08i", Score), 5, 5, 20, RED);
@@ -131,15 +138,15 @@ void UpdatePlayer(Player* player, Platform* platform, int platformsLength, float
 {
 	if (IsKeyDown(KEY_LEFT))
 	{
-		player->position.x -= PLAYER_HOR_SPD * delta;
+		player->position.x -= PLAYER_HORIZONTAL_SPEED * delta;
 	}
 	if (IsKeyDown(KEY_RIGHT))
 	{
-		player->position.x += PLAYER_HOR_SPD * delta;
+		player->position.x += PLAYER_HORIZONTAL_SPEED * delta;
 	}
 	if (player->canJump)
 	{
-		player->speed = -PLAYER_JUMP_SPD;
+		player->speed = -PLAYER_JUMP_SPEED;
 		player->canJump = false;
 	}
 
@@ -163,7 +170,7 @@ void UpdatePlayer(Player* player, Platform* platform, int platformsLength, float
 	if (!hitObstacle)
 	{
 		player->position.y += player->speed * delta;
-		player->speed += G * delta;
+		player->speed += GRAVITY * delta;
 		player->canJump = false;
 	}
 	else
@@ -229,7 +236,6 @@ void RandomPlatformGenerator()
 		
 		platforms[i].rect = RandomRec[i];
 		platforms[i].blocking = 1;
-		platforms[i].color = YELLOW;
 	}
 
 	PlatformsLength = sizeof(platforms) / sizeof(platforms[0]);
