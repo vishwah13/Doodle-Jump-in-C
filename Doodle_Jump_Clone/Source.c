@@ -1,4 +1,6 @@
 #include"raylib.h"
+#include"raymath.h"
+#include"stdio.h"
 
 #define GRAVITY 400
 #define PLAYER_JUMP_SPEED 350.0f
@@ -19,22 +21,35 @@ typedef struct Platform {
 	int blocking;
 } Platform;
 
+typedef struct Enemy {
+	Vector2 position;
+}Enemy;
+
 
 Platform platforms[PLATFORMCOUNT];
+Enemy enemy[5];
 Texture2D platformTexture;
-int GeneratedPlatformYaxisValue = 800;
+Texture2D enemyTexture;
+int GeneratedPlatformYaxisValue = 0;
+int GeneratedEnemyYaxisValue = 0;
 int PlatformsLength;
+int enemyLength;
 int Score;
+int EveryOffNumber = 0;
 bool bGameOver = false;
+bool benemyCollided = false;
 bool bPaused = false;
+bool bGenerateEnemy = false;
 
-void InitGame(Player* player,Camera2D* camera);
+void InitGame(Player* player,Camera2D* camera,Enemy* enemy);
 void UpdatePlayer(Player* player, Platform* platform, int platformsLength, float delta);
 void UpdateCameraEvenOutOnLanding(Camera2D* camera, Player* player, Platform* platform, int platformsLength, float delta, int width, int height);
 void RandomPlatformGenerator();
+void RandomEnemyGenerator();
 void DestroyPlatformAfterCrossedCameraBorder(Platform* platform,int platformsLength,Camera2D* camera);
 void CheckForGameOver(Player* player,Camera2D* camera);
 void UpdateScore(Player* player);
+void CalculateDistance(Player* player,Enemy* enemy);
 
 
 
@@ -48,7 +63,15 @@ int main()
 	Camera2D camera = { 0 };
 	player.playerTexture = LoadTexture("resources/character_0001.png");
 	platformTexture = LoadTexture("resources/CloudPlatform.png");
-	InitGame(&player, &camera);
+	enemyTexture = LoadTexture("resources/Enemy_1.png");
+	InitGame(&player, &camera,&enemy);
+
+	/*player.PlayerRect.width = 40;
+	player.PlayerRect.height = 40;*/
+	player.playerTexture.width = 40;
+	player.playerTexture.height = 40;
+	enemyTexture.width = 40;
+	enemyTexture.height = 40;
 	
 	while (!WindowShouldClose())
 	{
@@ -61,37 +84,36 @@ int main()
 			if (!bPaused)
 			{
 				UpdatePlayer(&player, platforms, PlatformsLength, deltaTime);
-
 				UpdateCameraEvenOutOnLanding(&camera, &player, platforms, PlatformsLength, deltaTime, ScreenWidth, ScreenHeight);
-
 				UpdateScore(&player);
-
 				DestroyPlatformAfterCrossedCameraBorder(platforms, PlatformsLength, &camera);
 				CheckForGameOver(&player, &camera);
+				player.PlayerRect.x = player.position.x - 20;
+				player.PlayerRect.y = player.position.y - 40;
+				CalculateDistance(&player, &enemy);
+				
 			}
 		}
 		else if(bGameOver)
 		{
 			if (IsKeyPressed(KEY_ENTER))
 			{
-				InitGame(&player, &camera);
+				InitGame(&player, &camera,&enemy);
 				bGameOver = false;
+				benemyCollided = false;
 			}
 		}
-
-		player.PlayerRect.x = player.position.x - 20;
-		player.PlayerRect.y = player.position.y - 40;
-		/*player.PlayerRect.width = 40;
-		player.PlayerRect.height = 40;*/
-		player.playerTexture.width = 40;
-		player.playerTexture.height = 40;
-
 
 		if (player.position.y < GeneratedPlatformYaxisValue)
 		{
 			GeneratedPlatformYaxisValue += 500;
 			RandomPlatformGenerator();
-		}
+		}	
+		/*if (player.position.y < GeneratedEnemyYaxisValue)
+		{
+			GeneratedEnemyYaxisValue += 500;
+			RandomEnemyGenerator();
+		}*/
 		//Drawing Things
 		BeginDrawing();
 		ClearBackground(LIGHTGRAY);
@@ -102,6 +124,13 @@ int main()
 			//DrawRectangleRec(platforms[i].rect, platforms[i].color);
 			DrawTexture(platformTexture, platforms[i].rect.x, platforms[i].rect.y, WHITE);
 		}
+		for (int i = 0; i < 5; i++)
+		{
+			//DrawRectangleRec(platforms[i].rect, platforms[i].color);
+			DrawTexture(enemyTexture, enemy[i].position.x, enemy[i].position.y, WHITE);
+			//printf("%f,%f\n", enemy[i].position.x, enemy[i].position.y);
+		}
+		
 		//Drawing Player
 		//DrawRectangleRec(player.PlayerRect, RED);
 		DrawTexture(player.playerTexture, player.PlayerRect.x, player.PlayerRect.y, WHITE);
@@ -118,9 +147,10 @@ int main()
 	return 0;
 }
 
-void InitGame(Player* player, Camera2D* camera)
+void InitGame(Player* player, Camera2D* camera,Enemy* enemy)
 {
-	GeneratedPlatformYaxisValue = 800;
+	GeneratedPlatformYaxisValue = 600;
+	GeneratedEnemyYaxisValue = 300;
 	Score = 0;
 
 	player->position = (Vector2){ 300, 400 };
@@ -131,7 +161,9 @@ void InitGame(Player* player, Camera2D* camera)
 	camera->offset = (Vector2){ GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
 	camera->rotation = 0.0f;
 	camera->zoom = 1.0f;
+	enemyLength = sizeof(enemy) / sizeof(enemy[0]);
 	RandomPlatformGenerator();
+	RandomEnemyGenerator();
 }
 
 void UpdatePlayer(Player* player, Platform* platform, int platformsLength, float delta)
@@ -236,9 +268,31 @@ void RandomPlatformGenerator()
 		
 		platforms[i].rect = RandomRec[i];
 		platforms[i].blocking = 1;
+		//printf("GeneratedPlatformYaxisValue: %i\n", GeneratedPlatformYaxisValue);
+
+		//if (GeneratedPlatformYaxisValue < EveryOffNumber - 300)
+		//{
+		//	EveryOffNumber = GeneratedPlatformYaxisValue;
+		//	//printf("%f\n",player->position.y);
+		//	enemy[i].position.x = GetRandomValue(20,380);
+		//	enemy[i].position.y = GeneratedPlatformYaxisValue;
+		//	//printf("%f,%f\n", enemy->position.x, enemy->position.y);
+
+		//}
 	}
 
 	PlatformsLength = sizeof(platforms) / sizeof(platforms[0]);
+	
+}
+
+void RandomEnemyGenerator()
+{
+	for (int i = 0; i < 5; i++)
+	{
+		//enemy[i].position = (Vector2){ GetRandomValue(20,380),GeneratedEnemyYaxisValue -= 300 };
+		enemy[i].position.x =  GetRandomValue(20,380);
+		enemy[i].position.y = GeneratedEnemyYaxisValue -= 300;
+	}
 }
 
 void DestroyPlatformAfterCrossedCameraBorder(Platform* platform, int platformsLength, Camera2D* camera)
@@ -254,7 +308,7 @@ void DestroyPlatformAfterCrossedCameraBorder(Platform* platform, int platformsLe
 
 void CheckForGameOver(Player* player, Camera2D* camera)
 {
-	if (player->speed > 600.f)
+	if (player->speed > 600.f || benemyCollided)
 	{
 		bGameOver = true;
 	}
@@ -267,3 +321,31 @@ void UpdateScore(Player* player)
 		Score = (player->position.y - 600) * -1;
 	}
 }
+
+void CalculateDistance(Player* player, Enemy* enemy)
+{
+	for (int i = 0; i < enemyLength; i++)
+	{
+		float distance = Vector2Distance(player->position, enemy[i].position);
+		if (distance < 5.0f)
+		{
+			benemyCollided = true;
+			printf("GAME OVER");
+		}
+	}
+	
+}
+
+//void GenerateEnemies(Player* player, Enemy* enemy)
+//{
+//	if (GeneratedPlatformYaxisValue > EveryOffNumber + 200)
+//	{
+//		EveryOffNumber = GeneratedPlatformYaxisValue;
+//		//printf("%f\n",player->position.y);
+//		enemy->position.x = 100;
+//		enemy->position.y = GeneratedPlatformYaxisValue - 100.f;
+//		printf("%f,%f", enemy->position.x, enemy->position.y);
+//		bGenerateEnemy = true;
+//
+//	}
+//}
